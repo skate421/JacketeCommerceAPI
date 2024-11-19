@@ -9,6 +9,10 @@ router.get('/all', async(req, res) => {
     res.json(products);
   });
 
+  router.get('/purchase', async (req, res) => {
+    res.send("purchase route");
+});
+
   router.get('/:id', async(req, res) => {
     const id = req.params.id;
   
@@ -31,9 +35,5 @@ router.get('/all', async(req, res) => {
       res.status(404).json({message: 'Product not found.'});
     }
   });
-
-router.get('/purchase', async (req, res) => {
-    res.send("purchase route");
-});
 
 export default router;
