@@ -52,6 +52,7 @@ router.post('/signup', upload.none(), async (req,res) => {
 
   //LOGIN ROUTE
   router.post('/login', async (req,res) => {
+    console.log('Request body:', req.body); // Add this log
     // get user inputs
     const { email, password } = req.body;
   
@@ -61,7 +62,7 @@ router.post('/signup', upload.none(), async (req,res) => {
     }
   
     // find user in database
-    const existingUser = await prisma.user.findUnique({
+    const existingUser = await prisma.customer.findUnique({
       where: {
         email: email,
       }
@@ -78,7 +79,7 @@ router.post('/signup', upload.none(), async (req,res) => {
   
     // setup user session data
     req.session.email = existingUser.email;
-    req.session.user_id = existingUser.id;
+    req.session.user_id = existingUser.customer_id;
     req.session.name = existingUser.firstName + ' ' + existingUser.lastName;
     console.log('logged in user: ' + req.session.email);
   
