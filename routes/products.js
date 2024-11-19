@@ -14,5 +14,4 @@ router.get('/purchase', async (req, res) => {
     res.send("purchase route");
 });
 
-
 export default router;
