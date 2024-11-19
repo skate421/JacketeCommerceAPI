@@ -12,8 +12,8 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.static('public'));
 //app.use(cors());
 
-app.use('/api/jacket', userRouter);
-app.use('/api/jacket', productRouter);
+app.use('/api/jacket/users', userRouter);
+app.use('/api/jacket/products', productRouter);
 
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`);

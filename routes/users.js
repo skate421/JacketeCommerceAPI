@@ -1,21 +1,27 @@
 import express from 'express';
+import multer from 'multer';
 import { hashPassword, comparePassword } from '../lib/utility.js'
 import { PrismaClient } from '@prisma/client';
 
 const router = express.Router();
+//Prisma setup
 const prisma = new PrismaClient();
+const upload = multer();
 
-router.post('/users/signup', async (req,res) => {
+
+
+//SIGNUP ROUTE
+router.post('/signup', upload.none(), async (req,res) => {
     // get user inputs
-    const { email, password, firstName, lastName } = req.body;
+    const { email, password, first_name, last_name } = req.body;
   
     // validate the inputs (to-do: validate email, enforce password policy)
-    if(!email || !password || !firstName || !lastName) {
+    if(!email || !password || !first_name || !last_name) {
       return res.status(400).send('Missing required fields');
     }
   
     // check for existing user
-    const existingUser = await prisma.user.findUnique({
+    const existingUser = await prisma.customer.findUnique({
       where: {
         email: email,
       }
@@ -28,10 +34,10 @@ router.post('/users/signup', async (req,res) => {
     const hashedPassword = await hashPassword(password);
   
     // add user to database
-    const user = await prisma.user.create({
+    const user = await prisma.customer.create({
         data: {
-          firstName: firstName,
-          lastName: lastName,
+          first_name: first_name,
+          last_name: last_name,
           email: email,
           password: hashedPassword
         },
@@ -41,7 +47,11 @@ router.post('/users/signup', async (req,res) => {
     res.json({'user' : email});
   });
 
-  router.post('/users/login', async (req,res) => {
+
+
+
+  //LOGIN ROUTE
+  router.post('/login', async (req,res) => {
     // get user inputs
     const { email, password } = req.body;
   
@@ -76,14 +86,12 @@ router.post('/users/signup', async (req,res) => {
     res.send('Login successful');
   });
   
+
+  //LOGOUT OUT
   router.post('/logout', (req,res) => {
     req.session.destroy();
     res.send('Successful logout');
   });
-
-router.get('/users/logout', async (req, res) => {
-    res.send("Logout route");
-});
 
 
 export default router;
