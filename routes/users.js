@@ -52,7 +52,6 @@ router.post('/signup', upload.none(), async (req,res) => {
 
   //LOGIN ROUTE
   router.post('/login', async (req,res) => {
-    console.log('Request body:', req.body); // Add this log
     // get user inputs
     const { email, password } = req.body;
   
