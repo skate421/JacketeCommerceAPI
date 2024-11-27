@@ -112,16 +112,25 @@ router.post('/signup', upload.none(), async (req,res) => {
 
   //LOGOUT OUT
   router.post('/logout', (req,res) => {
+    if(req.session.user_id){
+    console.log('User trying to logout: ' + req.session.email);
     req.session.destroy();
-    res.send('Successful logout');
+    if(!req.session){
+      res.send('Successful logout');
+      }else{
+        return res.status(500).send('Session destroy error');
+      }
+    }else{
+      return res.status(401).send('Not logged in');
+    }
   });
 
 
   //GETSESSION
   router.get('/getsession', (req,res) => {
-    if(req.session.customer_id){
+    if(req.session.user_id){
       res.json({
-        customer_id: req.session.customer_id,
+        customer_id: req.session.user_id,
         email: req.session.email,
         name: req.session.name
       });

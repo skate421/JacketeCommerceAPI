@@ -14,10 +14,13 @@ router.get('/all', async(req, res) => {
   router.post('/purchase', async (req, res) => {
     //Required inputs
     if(req.session.customer_id){
-    const { street, city, province, country, postal_code, credit_card,  credit_expire, credit_cvv, car, invoice_amt, invoice_tax, invoice_total } = req.body;
-  }else{
-    return res.status(401).json({message: 'Unauthorized'});
-  }
+      const { street, city, province, country, postal_code, credit_card,  credit_expire, credit_cvv, car, invoice_amt, invoice_tax, invoice_total } = req.body;
+      if(!street || !city || !province || !country || !postal_code || !credit_card || !credit_expire || !credit_cvv || !car || !invoice_amt || !invoice_tax || !invoice_total) {
+        return res.status(400).send('Missing required fields');
+      }
+    }else{
+      return res.status(401).json({message: 'Unauthorized'});
+    }
 });
 
   router.get('/:id', async(req, res) => {
