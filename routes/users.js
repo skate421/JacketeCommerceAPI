@@ -2,6 +2,7 @@ import express from 'express';
 import multer from 'multer';
 import { hashPassword, comparePassword } from '../lib/utility.js'
 import { PrismaClient } from '@prisma/client';
+import PasswordValidator from 'password-validator';
 
 const router = express.Router();
 //Prisma setup
@@ -12,12 +13,29 @@ const upload = multer();
 
 //SIGNUP ROUTE
 router.post('/signup', upload.none(), async (req,res) => {
+  // Create a schema
+  const schema = new PasswordValidator();
+
+  // Add properties to it
+  schema
+  .is().min(8)                                    // Minimum length 8
+  .is().max(100)                                  // Maximum length 100
+  .has().uppercase()                              // Must have uppercase letters
+  .has().lowercase()                              // Must have lowercase letters
+  .has().digits(1)                                // Must have at least 2 digits
+  .has().not().spaces()                           // Should not have spaces
+
     // get user inputs
     const { email, password, first_name, last_name } = req.body;
-  
+
     // validate the inputs (to-do: validate email, enforce password policy)
     if(!email || !password || !first_name || !last_name) {
       return res.status(400).send('Missing required fields');
+    }else{
+          if(!schema.validate(password)){
+            const failedRules = schema.validate(password, { list: true });
+            return res.status(400).send(`Invalid password. Please make sure these requirements are met: ${failedRules.join(', ')}`);
+        }
     }
   
     // check for existing user
@@ -66,6 +84,7 @@ router.post('/signup', upload.none(), async (req,res) => {
         email: email,
       }
     });
+
     if (!existingUser) {
       return res.status(404).send('User not found');
     }
@@ -76,11 +95,15 @@ router.post('/signup', upload.none(), async (req,res) => {
       return res.status(401).send('Invalid password');
     }
   
+    if (!req.session) {
+      return res.status(500).send('Session initialization error');
+    }
+
     // setup user session data
-    /*req.session.email = existingUser.email;
+    req.session.email = existingUser.email;
     req.session.user_id = existingUser.customer_id;
     req.session.name = existingUser.firstName + ' ' + existingUser.lastName;
-    console.log('logged in user: ' + req.session.email);*/
+    console.log('logged in user: ' + req.session.email);
   
     // send response
     res.send('Login successful');
@@ -94,4 +117,17 @@ router.post('/signup', upload.none(), async (req,res) => {
   });
 
 
+  //GETSESSION
+  router.get('/getsession', (req,res) => {
+    if(req.session.customer_id){
+      res.json({
+        customer_id: req.session.customer_id,
+        email: req.session.email,
+        name: req.session.name
+      });
+    }else{
+      return res.status(401).send('Not logged in');
+    }
+  });
+  
 export default router;
