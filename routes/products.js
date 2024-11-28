@@ -11,32 +11,29 @@ router.get('/all', async(req, res) => {
 
 
   router.post('/purchase', async (req, res) => {
-    // Check if the user is logged in
     if (!req.session.user_id) {
-      return res.status(401).json({ message: 'Not logged in' });
+      return res.status(401).send('Not logged in');
     }
   
     try {
       const { 
         street, city, province, country, postal_code, 
         credit_card, credit_expire, credit_cvv, 
-        invoice_amt, invoice_tax, invoice_total, cart 
+        invoice_amt, invoice_tax, invoice_total, cart, order_date 
       } = req.body;
   
-      // Validate the required fields
       if (!street || !city || !province || !country || !postal_code || 
           !credit_card || !credit_expire || !credit_cvv || 
-          !invoice_amt || !invoice_tax || !invoice_total || !cart) {
+          !invoice_amt || !invoice_tax || !invoice_total || !cart || !order_date) {
         return res.status(400).send('Missing required fields');
       }
   
-      // Parse and validate numeric values
       const parsedInvoiceAmt = parseFloat(invoice_amt);
       const parsedInvoiceTax = parseFloat(invoice_tax);
       const parsedInvoiceTotal = parseFloat(invoice_total);
   
       if (isNaN(parsedInvoiceAmt) || isNaN(parsedInvoiceTax) || isNaN(parsedInvoiceTotal)) {
-        return res.status(400).json({ message: 'Invoice amounts must be floats' });
+        return res.status(400).send('Invoice amounts must be numerical');
       }
   
       // Parse the cart string (comma-delimited list of product IDs)
@@ -48,15 +45,15 @@ router.get('/all', async(req, res) => {
   
       const purchaseItems = [];
       const productFetchPromises = [];
-  
-      // Fetch product details for validation
+      const invalidProducts = false;
+
       for (const productId of Object.keys(productCounts)) {
         productFetchPromises.push(
           prisma.product.findUnique({
             where: { product_id: parseInt(productId) },
           }).then((product) => {
             if (!product) {
-              throw new Error(`Product with ID ${productId} not found`);
+              invalidProducts = true;
             }
             purchaseItems.push({
               product_id: parseInt(productId),
@@ -65,11 +62,13 @@ router.get('/all', async(req, res) => {
           })
         );
       }
+
+      if (invalidProducts){
+        return res.status(400).send('Invalid product ID');
+      }
   
-      // Resolve all product fetch promises
       await Promise.all(productFetchPromises);
   
-      // Create the Purchase record
       const purchase = await prisma.Purchase.create({
         data: {
           customer_id: req.session.user_id,
@@ -82,13 +81,13 @@ router.get('/all', async(req, res) => {
           credit_expire,
           credit_cvv,
           cart,
+          order_date,
           invoice_amt: parsedInvoiceAmt,
           invoice_tax: parsedInvoiceTax,
           invoice_total: parsedInvoiceTotal,
         },
       });
   
-      // Insert the PurchaseItems into the PurchaseItem table
       const purchaseItemPromises = purchaseItems.map((item) =>
         prisma.PurchaseItem.create({
           data: {
@@ -104,7 +103,7 @@ router.get('/all', async(req, res) => {
       res.send('Purchase successful');
     } catch (error) {
       console.error(error);
-      res.status(500).send('An error occurred during the purchase process');
+      return res.status(500).send('An error occurred');
     }
   });
   
@@ -112,14 +111,11 @@ router.get('/all', async(req, res) => {
 
   router.get('/:id', async(req, res) => {
     const id = req.params.id;
-  
-    //Validate id is a number
+
     if(isNaN(id)){
-      res.status(400).json({message: 'Invalid id'});
-      return;
+      return res.status(400).send('Id must be a number');
     }
-  
-    //By id
+
     const product = await prisma.product.findUnique({
       where: {
         product_id: parseInt(id),
@@ -129,7 +125,7 @@ router.get('/all', async(req, res) => {
     if(product){
       res.json(product);
     }else{
-      res.status(404).json({message: 'Product not found.'});
+      return res.status(404).send('Product not found');
     }
   });
 
