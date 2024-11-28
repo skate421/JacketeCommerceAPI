@@ -32,6 +32,7 @@ model Purchase {
   customer_id    Int
   street         String
   city           String
+  cart String
   province       String
   country        String
   postal_code    String
@@ -41,7 +42,7 @@ model Purchase {
   invoice_amt    Float
   invoice_tax    Float
   invoice_total  Float
-  order_date     DateTime
+  order_date     DateTime 
 
   purchaseItems  PurchaseItem[]
 }
